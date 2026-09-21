@@ -42,7 +42,13 @@
     let j;
     try { j = JSON.parse(t); }
     catch (e) { throw new Error('Réponse inattendue du serveur.'); }
-    if (!j.ok) throw new Error(j.erreur || 'Erreur inconnue côté serveur.');
+    if (!j.ok) {
+      // Le serveur a bien été joint et il refuse la saisie : la remettre en
+      // file d'attente ne servirait à rien, elle serait refusée indéfiniment.
+      const err = new Error(j.erreur || 'Erreur inconnue côté serveur.');
+      err.refusServeur = true;
+      throw err;
+    }
     return j;
   }
 
@@ -108,8 +114,13 @@
 
     function depuisEvenement(ev) {
       const r = piste.getBoundingClientRect();
+      // Sans cette garde, une largeur nulle (élément masqué au moment du
+      // clic) produirait un NaN qui traverserait tout le formulaire.
+      if (!(r.width > 0)) return;
       const x = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
-      valeur = Math.max(0, Math.min(100, (x / r.width) * 100));
+      const v = (x / r.width) * 100;
+      if (!Number.isFinite(v)) return;
+      valeur = Math.max(0, Math.min(100, v));
       affiche();
     }
 
@@ -277,17 +288,22 @@
     };
   }
 
+  /** Une note d'échelle doit être un nombre fini entre 0 et 10 — pas seulement
+      « non nulle » : un NaN passerait la vérification et serait rejeté par le
+      serveur après coup, une fois le coureur parti. */
+  const noteValide = (v) => Number.isFinite(v) && v >= 0 && v <= 10;
+
   function valide(d) {
     if (!d.coureur)                       return 'Choisis ton nom dans la liste.';
     if (!d.date)                          return 'Indique la date de la séance.';
     if (!d.type_seance)                   return 'Sélectionne le type de séance.';
-    if (!d.duree || d.duree <= 0)         return 'Indique la durée de la séance, en minutes.';
+    if (!Number.isFinite(d.duree) || d.duree <= 0) return 'Indique la durée de la séance, en minutes.';
     if (d.duree > 1440)                   return 'La durée saisie dépasse 24 h : il doit y avoir une erreur.';
-    if (d.distance !== null && (isNaN(d.distance) || d.distance < 0)) return 'La distance ne semble pas valide.';
-    if (d.forme === null)                 return 'Place le curseur sur l\'échelle de forme.';
-    if (d.rpe_total === null)             return 'Place le curseur sur l\'échelle de difficulté de la séance.';
+    if (d.distance !== null && (!Number.isFinite(d.distance) || d.distance < 0)) return 'La distance ne semble pas valide.';
+    if (!noteValide(d.forme))             return 'Place le curseur sur l\'échelle de forme.';
+    if (!noteValide(d.rpe_total))         return 'Place le curseur sur l\'échelle de difficulté de la séance.';
     if (!d.allures)                       return 'Réponds à la question sur les allures.';
-    if (d.rpe_travail === null)           return 'Place le curseur sur l\'échelle de difficulté de la partie travail.';
+    if (!noteValide(d.rpe_travail))       return 'Place le curseur sur l\'échelle de difficulté de la partie travail.';
     return null;
   }
 
@@ -311,9 +327,19 @@
       await appelApi(d);
       afficheConfirmation(d, true);
     } catch (e) {
-      // Rien n'est perdu : la séance part dans la file d'attente locale.
-      empile(d);
-      afficheConfirmation(d, false, e.message);
+      if (e.refusServeur) {
+        // Le serveur a refusé la saisie : surtout ne pas afficher une
+        // confirmation ni la mettre en attente. Le formulaire reste rempli
+        // pour que le coureur puisse corriger.
+        message('erreur',
+          '<b>Séance non enregistrée.</b> ' + echappe(e.message) +
+          '<br>Vérifie ta saisie et renvoie. Si ça recommence, préviens le coach.');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        // Problème de réseau : rien n'est perdu, la séance part en file d'attente.
+        empile(d);
+        afficheConfirmation(d, false, e.message);
+      }
     } finally {
       bouton.disabled = false;
       bouton.textContent = 'Envoyer ma séance';
@@ -369,16 +395,27 @@
     try { f = JSON.parse(stock.lire(CLE_FILE) || '[]'); } catch (e) { return; }
     if (!f.length) return;
 
-    const restantes = [];
+    const restantes = [], refusees = [];
     for (const d of f) {
       try { await appelApi(d); }
-      catch (e) { restantes.push(d); }
+      catch (e) {
+        // Une saisie que le serveur refuse ne passera jamais : la garder en
+        // file bloquerait la file à chaque ouverture du site.
+        if (e.refusServeur) refusees.push({ d, raison: e.message });
+        else restantes.push(d);
+      }
     }
-    if (restantes.length) {
-      stock.ecrire(CLE_FILE, JSON.stringify(restantes));
+    stock.ecrire(CLE_FILE, JSON.stringify(restantes));
+    if (!restantes.length) stock.effacer(CLE_FILE);
+
+    if (refusees.length) {
+      message('erreur',
+        `<b>${refusees.length} séance(s) en attente ont été refusées et abandonnées.</b> ` +
+        echappe(refusees[0].raison) +
+        '<br>Il faut les ressaisir. Préviens le coach si tu ne sais pas laquelle.');
+    } else if (restantes.length) {
       message('attente', `${restantes.length} séance(s) encore en attente d'envoi : garde ce site ouvert quelques secondes quand tu auras du réseau.`);
-    } else {
-      stock.effacer(CLE_FILE);
+    } else if (f.length) {
       message('ok', `${f.length} séance(s) mise(s) en attente ont bien été envoyées.`);
       setTimeout(videMessages, 6000);
     }

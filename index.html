@@ -60,8 +60,8 @@
           <div>
             <label class="champ-titre" for="groupe">Groupe</label>
             <select id="groupe" name="groupe">
-              <option value="G2">G2</option>
-              <option value="G3">G3</option>
+              <option value="MerLun">MerLun</option>
+              <option value="MarJeu">MarJeu</option>
               <option value="Hors groupe">Hors groupe</option>
             </select>
           </div>
@@ -178,13 +178,13 @@
     <div id="tableau-bord" style="display:none">
 
       <div class="barre-coach">
-        <select id="selection-coureur" aria-label="Coureur affiché">
+        <select id="selection-coureur" aria-label="Coureur affiché" style="padding-right:34px">
           <option value="__groupe__">▸ Vue d'ensemble du groupe</option>
         </select>
-        <select id="filtre-groupe" aria-label="Filtrer par groupe" style="flex:0 0 auto;min-width:0;width:110px">
+        <select id="filtre-groupe" aria-label="Filtrer par groupe" style="flex:0 0 auto;min-width:0;width:128px">
           <option value="">Tous</option>
-          <option value="G2">G2</option>
-          <option value="G3">G3</option>
+          <option value="MerLun">MerLun</option>
+          <option value="MarJeu">MarJeu</option>
         </select>
         <button type="button" class="bouton-secondaire" id="rafraichir" title="Recharger les données">↻</button>
         <button type="button" class="bouton-secondaire" id="export-csv">CSV</button>

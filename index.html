@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#121212">
+<title>Eckbo Team — Suivi des entraînements</title>
+<meta name="description" content="Recueil du ressenti et de la charge d'entraînement après les séances Eckbo Team.">
+<link rel="stylesheet" href="assets/styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23121212'/%3E%3Cpath d='M7 22c5-1 7-4 9-8s4-6 9-7c-3 4-4 6-6 9s-6 6-12 6z' fill='%235CC22E'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<header class="entete">
+  <div class="entete-haut">
+    <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="7" fill="#fff"/>
+      <path d="M5 24c6-1 8.5-4.5 11-9.5S21.5 6.5 27 5c-3.5 5-5 7.5-7.5 11.5S12 24 5 24z" fill="#5CC22E"/>
+      <path d="M12 26c4-.6 6-2.6 7.5-5.6" stroke="#121212" stroke-width="2" stroke-linecap="round" fill="none"/>
+    </svg>
+    <div class="titre-bloc">
+      <h1 class="titre">Eckbo<span>Team</span></h1>
+      <p class="sous-titre">Suivi des entraînements</p>
+    </div>
+  </div>
+
+  <nav class="onglets" role="tablist">
+    <button class="onglet" role="tab" id="tab-saisie" aria-selected="true" aria-controls="page-saisie">Ma séance</button>
+    <button class="onglet" role="tab" id="tab-coach"  aria-selected="false" aria-controls="page-coach">Espace coach</button>
+  </nav>
+</header>
+
+<!-- =====================================================================
+     ONGLET 1 — SAISIE COUREUR
+     ===================================================================== -->
+<main class="page active" id="page-saisie" role="tabpanel" aria-labelledby="tab-saisie">
+  <div class="contenu">
+
+    <div id="zone-messages"></div>
+
+    <!-- Formulaire -->
+    <form id="formulaire" autocomplete="off" novalidate>
+
+      <!-- Identité -->
+      <section class="carte">
+        <label class="champ-titre" for="coureur">Qui es-tu ? <span class="oblig">*</span></label>
+        <select id="coureur" name="coureur" required>
+          <option value="">— Choisis ton nom —</option>
+        </select>
+        <p class="aide" id="aide-nom">Ton nom est mémorisé sur ce téléphone : tu ne le choisiras qu'une fois.</p>
+      </section>
+
+      <!-- Date + groupe -->
+      <section class="carte">
+        <div class="duo">
+          <div>
+            <label class="champ-titre" for="date">Date <span class="oblig">*</span></label>
+            <input type="date" id="date" name="date" required>
+          </div>
+          <div>
+            <label class="champ-titre" for="groupe">Groupe</label>
+            <select id="groupe" name="groupe">
+              <option value="G2">G2</option>
+              <option value="G3">G3</option>
+              <option value="Hors groupe">Hors groupe</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Type de séance -->
+      <section class="carte">
+        <span class="champ-titre">Type de séance <span class="oblig">*</span></span>
+        <div class="choix" id="choix-type" role="group" aria-label="Type de séance"></div>
+        <input type="hidden" id="type_seance" name="type_seance">
+      </section>
+
+      <!-- Durée + distance -->
+      <section class="carte">
+        <div class="duo empile">
+          <div>
+            <label class="champ-titre" for="duree">Durée totale (min) <span class="oblig">*</span></label>
+            <div class="duree-ligne">
+              <button type="button" class="pas" data-pas="-5" aria-label="Retirer 5 minutes">−</button>
+              <input type="text" id="duree" name="duree" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="60">
+              <button type="button" class="pas" data-pas="5" aria-label="Ajouter 5 minutes">+</button>
+            </div>
+            <p class="aide">Échauffement + travail + retour au calme, montre à l'appui.</p>
+          </div>
+          <div>
+            <label class="champ-titre" for="distance">Distance (km)</label>
+            <input type="text" id="distance" name="distance" inputmode="decimal" maxlength="6" placeholder="10,5">
+          </div>
+        </div>
+      </section>
+
+      <!-- Forme -->
+      <section class="carte">
+        <span class="champ-titre">Comment te sentais-tu <em>avant</em> la séance ? <span class="oblig">*</span></span>
+        <div class="evs" data-evs="forme"
+             data-min="Épuisé, jambes lourdes" data-max="Très en forme, frais"
+             data-libelles="Épuisé|Épuisé|Très fatigué|Fatigué|Moyen−|Moyen|Moyen+|Bien|Très bien|En pleine forme|Au top"></div>
+        <input type="hidden" id="forme" name="forme">
+      </section>
+
+      <!-- RPE total -->
+      <section class="carte">
+        <span class="champ-titre">Difficulté de la séance <em>entière</em> <span class="oblig">*</span></span>
+        <div class="evs" data-evs="rpe_total"
+             data-min="Aucun effort" data-max="Effort maximal"
+             data-libelles="Repos|Très très facile|Très facile|Facile|Assez facile|Moyen|Assez dur|Dur|Très dur|Très très dur|Maximal"></div>
+        <input type="hidden" id="rpe_total" name="rpe_total">
+        <p class="aide">Note globale, tout compris, comme si tu résumais la séance en un seul chiffre.</p>
+      </section>
+
+      <!-- Allures tenues -->
+      <section class="carte">
+        <span class="champ-titre">« J'ai pu tenir les allures prévues » <span class="oblig">*</span></span>
+        <div class="choix trois" id="choix-allures" role="group" aria-label="Allures tenues"></div>
+        <input type="hidden" id="allures" name="allures">
+      </section>
+
+      <!-- RPE travail -->
+      <section class="carte">
+        <span class="champ-titre">Difficulté de la <em>partie travail</em> seule <span class="oblig">*</span></span>
+        <div class="evs" data-evs="rpe_travail"
+             data-min="Aucun effort" data-max="Effort maximal"
+             data-libelles="Repos|Très très facile|Très facile|Facile|Assez facile|Moyen|Assez dur|Dur|Très dur|Très très dur|Maximal"></div>
+        <input type="hidden" id="rpe_travail" name="rpe_travail">
+        <p class="aide">Uniquement les fractions / le corps de séance, sans l'échauffement ni le retour au calme.</p>
+      </section>
+
+      <!-- Commentaire -->
+      <section class="carte">
+        <label class="champ-titre" for="commentaire">Un mot pour le coach ? <span style="text-transform:none;font-weight:600">(facultatif)</span></label>
+        <textarea id="commentaire" name="commentaire" maxlength="600"
+                  placeholder="Douleur, sommeil, météo, ce qui a coincé ou bien marché…"></textarea>
+      </section>
+
+      <button type="submit" class="envoi" id="bouton-envoi">Envoyer ma séance</button>
+    </form>
+
+    <!-- Confirmation -->
+    <div class="carte confirmation" id="confirmation" style="display:none">
+      <div class="coche">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 12.5l5.5 5.5L20 6.5"/>
+        </svg>
+      </div>
+      <h2>C'est enregistré, merci&nbsp;!</h2>
+      <p id="confirmation-texte">Ta séance est bien arrivée chez le coach.</p>
+      <div class="recap" id="recap"></div>
+      <button type="button" class="bouton-secondaire" id="nouvelle-saisie">Saisir une autre séance</button>
+    </div>
+
+  </div>
+</main>
+
+<!-- =====================================================================
+     ONGLET 2 — ESPACE COACH
+     ===================================================================== -->
+<main class="page" id="page-coach" role="tabpanel" aria-labelledby="tab-coach">
+  <div class="contenu">
+
+    <!-- Connexion -->
+    <div class="connexion" id="connexion">
+      <div class="cadenas">🔒</div>
+      <h2>Espace réservé aux coachs</h2>
+      <p>Les données des coureurs ne sont visibles qu'après authentification.</p>
+      <form id="formulaire-connexion">
+        <input type="password" id="motdepasse" placeholder="Mot de passe" autocomplete="current-password" style="text-align:center;margin-bottom:10px">
+        <button type="submit" class="envoi" id="bouton-connexion">Entrer</button>
+      </form>
+      <div id="message-connexion" style="margin-top:12px"></div>
+    </div>
+
+    <!-- Tableau de bord -->
+    <div id="tableau-bord" style="display:none">
+
+      <div class="barre-coach">
+        <select id="selection-coureur" aria-label="Coureur affiché">
+          <option value="__groupe__">▸ Vue d'ensemble du groupe</option>
+        </select>
+        <select id="filtre-groupe" aria-label="Filtrer par groupe" style="flex:0 0 auto;min-width:0;width:110px">
+          <option value="">Tous</option>
+          <option value="G2">G2</option>
+          <option value="G3">G3</option>
+        </select>
+        <button type="button" class="bouton-secondaire" id="rafraichir" title="Recharger les données">↻</button>
+        <button type="button" class="bouton-secondaire" id="export-csv">CSV</button>
+      </div>
+
+      <div id="zone-coach"></div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="pied">
+  Eckbo Team · Suivi de charge d'entraînement · <span id="version"></span>
+</footer>
+
+<script src="assets/membres.js"></script>
+<script src="assets/config.js"></script>
+<script src="assets/charge.js"></script>
+<script src="assets/graphiques.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
